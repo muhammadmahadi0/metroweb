@@ -1,5 +1,5 @@
-import { ResolvedChannel } from '@/lib/youtube'
-import { Channel } from '@/lib/index'
+import type { ResolvedChannel } from '@/lib/youtube'
+import type { Channel } from '@/lib/index'
 
 export function channelFromResolved(resolved: ResolvedChannel): Channel {
   return {

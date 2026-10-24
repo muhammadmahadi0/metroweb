@@ -1,7 +1,5 @@
 'use client'
 
-import Image from 'next/image'
-
 interface ChannelHeaderProps {
   channel: {
     title: string
@@ -14,26 +12,32 @@ interface ChannelHeaderProps {
 export default function ChannelHeader({ channel }: ChannelHeaderProps) {
   return (
     <div className="relative h-64 w-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-      <div className="absolute inset-0 w-full h-full">
-        <Image
+      {channel.thumbnail && (
+        <img
           src={channel.thumbnail}
           alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 1280px"
-          className="object-cover"
-          priority
+          className="absolute inset-0 h-full w-full object-cover"
         />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-      <div className="absolute bottom-0 left-0 p-6 w-full">
-        <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
-          {channel.title}
-        </h1>
-        {channel.description && (
-          <p className="mt-1 text-sm text-gray-200 drop-shadow-md line-clamp-2 max-w-2xl">
-            {channel.description}
-          </p>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 p-6 w-full flex items-end gap-4">
+        {channel.thumbnail && (
+          <img
+            src={channel.thumbnail}
+            alt=""
+            className="h-20 w-20 rounded-2xl object-cover border-2 border-white/20 shadow-lg flex-shrink-0"
+          />
         )}
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg truncate">
+            {channel.title}
+          </h1>
+          {channel.description && (
+            <p className="mt-1 text-sm text-gray-200 drop-shadow-md line-clamp-2 max-w-2xl">
+              {channel.description}
+            </p>
+          )}
+        </div>
       </div>
       <a
         href={channel.url}

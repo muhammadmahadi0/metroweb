@@ -22,6 +22,6 @@ yarn-error.log*
 *.tsbuildinfo
 
 # Build artifacts / platform workarounds
-build.log
+build*.log
 .next-wasm/
 @next/
