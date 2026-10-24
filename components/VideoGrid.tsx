@@ -1,73 +1,20 @@
 'use client'
 
+import { Play } from 'lucide-react'
+
+interface Video {
+  videoId: string
+  title: string
+  description: string
+  thumbnail: string
+  channelTitle: string
+  publishedAt: string
+  channelId: string
+  watchUrl: string
+}
+
 interface VideoGridProps {
-  videos: Array<{
-    videoId: string
-    title: string
-    description: string
-    thumbnail: string
-    channelTitle: string
-    publishedAt: string
-    channelId: string
-    watchUrl: string
-  }>
-}
-
-export default function VideoGrid({ videos }: VideoGridProps) {
-  if (videos.length === 0) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-gray-500 dark:text-gray-400">No videos found.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {videos.map((video) => (
-        <div key={video.videoId}>
-          <VideoGridItem video={video} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function VideoGridItem({ video }: { video: VideoGridProps['videos'][number] }) {
-  return (
-    <a
-      href={video.watchUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block group rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-blue-400/60 hover:shadow-lg transition-all duration-200 overflow-hidden"
-    >
-      <div className="relative h-44 w-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-        <img
-          src={video.thumbnail}
-          alt=""
-          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
-          loading="lazy"
-        />
-        <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded-lg">
-          ▶
-        </div>
-      </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1.5 leading-snug">
-          {video.title}
-        </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">
-          {video.channelTitle}
-        </p>
-        <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-500">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
-            {formatRelative(video.publishedAt)}
-          </span>
-        </div>
-      </div>
-    </a>
-  )
+  videos: Video[]
 }
 
 function formatRelative(iso: string): string {
@@ -86,4 +33,54 @@ function formatRelative(iso: string): string {
   const months = Math.floor(days / 30)
   if (months < 12) return `${months}mo ago`
   return `${Math.floor(days / 365)}y ago`
+}
+
+export default function VideoGrid({ videos }: VideoGridProps) {
+  if (videos.length === 0) {
+    return (
+      <div className="rounded-m3-lg bg-surface-container-low px-6 py-12 text-center">
+        <p className="text-sm text-on-surface-variant">No videos found.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {videos.map((video) => (
+        <a
+          key={video.videoId}
+          href={video.watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="m3-card group block overflow-hidden"
+        >
+          <div className="relative aspect-video w-full overflow-hidden bg-surface-container-high">
+            <img
+              src={video.thumbnail}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/25">
+              <span className="flex h-12 w-12 scale-90 items-center justify-center rounded-m3-full bg-black/60 text-white opacity-0 backdrop-blur transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
+                <Play className="ml-0.5 h-5 w-5 fill-current" />
+              </span>
+            </div>
+          </div>
+
+          <div className="p-4">
+            <h3 className="line-clamp-2 text-[15px] font-medium leading-snug text-on-surface">
+              {video.title}
+            </h3>
+            <p className="mt-1.5 truncate text-[13px] text-on-surface-variant">
+              {video.channelTitle}
+            </p>
+            <p className="mt-0.5 text-[11px] text-on-surface-variant">
+              {formatRelative(video.publishedAt)}
+            </p>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
 }

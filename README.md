@@ -17,8 +17,18 @@ The original MetroList is a YouTube Music client for Android. This clone is a **
 - ✅ Channel metadata resolved server-side (title, description, thumbnail, channel ID)
 - ✅ Latest videos per channel (requires YouTube Data API v3 key)
 - ✅ Remove channels
-- ✅ Responsive grid, dark mode, client-side navigation
+- ✅ **Material 3 (Material You) design system** — tonal color tokens, elevation, extended FAB, rounded cards, dialog, light/dark themes
+- ✅ Responsive grid, theme toggle (persisted), client-side navigation
 - ✅ Persisted in `localStorage`
+
+## Design
+
+The UI implements a Material 3 design system from scratch:
+
+- Tonal color roles (`primary`, `secondary`, `tertiary`, `surface-container-*`, `outline`, `error`, …) defined as CSS variables for light and dark schemes.
+- M3 elevation levels (`shadow-m3-1` … `shadow-m3-4`).
+- Components: filled/tonal/text/outlined buttons, extended FAB, icon buttons, filled text field, chips, cards, dialog with scrim, empty state.
+- Roboto typography and a no-flash theme script.
 
 ## Getting started
 
@@ -51,6 +61,16 @@ To get a key:
 - React 19
 - Tailwind CSS
 - Lucide React (icons)
+
+## Deploying to Vercel
+
+1. Import the repository at https://vercel.com/new
+2. Framework preset: **Next.js**
+3. Add environment variable `YOUTUBE_DATA_API_KEY` (see above)
+4. Ensure the Node.js version is **20.x or 22.x**
+5. Deploy
+
+The build uses `next build --webpack` (see `package.json`) for maximum compatibility.
 
 ## License
 

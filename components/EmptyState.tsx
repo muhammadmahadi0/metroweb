@@ -1,7 +1,6 @@
 'use client'
 
-import { Plus, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { Plus, Youtube } from 'lucide-react'
 
 interface EmptyStateProps {
   onAdd: () => void
@@ -9,33 +8,21 @@ interface EmptyStateProps {
 
 export default function EmptyState({ onAdd }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-      <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4 border border-blue-100 dark:border-blue-800">
-        <Plus className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+    <div className="flex flex-col items-center justify-center rounded-m3-xl bg-surface-container-low px-6 py-20 text-center">
+      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-m3-full bg-primary-container text-on-primary-container">
+        <Youtube className="h-11 w-11" />
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <h2 className="text-2xl font-normal leading-8 text-on-surface">
         No channels yet
       </h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
-        Add a YouTube channel by pasting its link to start building your list.
+      <p className="mt-2 max-w-sm text-sm text-on-surface-variant">
+        Add a YouTube channel by pasting its link to start building your
+        personal list.
       </p>
-      <button onClick={onAdd} className="flex items-center gap-2 metro-btn-primary">
-        <Plus className="w-4 h-4" /> Add Channel
+      <button onClick={onAdd} className="m3-btn m3-btn-filled mt-6">
+        <Plus className="h-4 w-4" />
+        Add channel
       </button>
     </div>
   )
-}
-
-interface NavbarProps {
-  channels: Array<{ id: string }>
-  onAdd: () => void
-  onRemove: (id: string) => void
-}
-
-export function Navbar({
-  channels,
-  onAdd,
-  onRemove,
-}: NavbarProps) {
-  return null
 }

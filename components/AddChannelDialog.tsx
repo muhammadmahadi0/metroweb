@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, ArrowRight, Loader2 } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { channelFromResolved } from '@/lib/channel'
 import { addChannel } from '@/lib/index'
 
@@ -35,6 +35,7 @@ export default function AddChannelDialog({
       }
       const channel = channelFromResolved(json)
       addChannel(channel)
+      onAdd()
       onClose()
       setUrl('')
       router.push(`/channel/${channel.id}`)
@@ -48,68 +49,76 @@ export default function AddChannelDialog({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 animate-m3-scrim bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-5 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Add Channel
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              YouTube channel link
-            </label>
-            <input
-              className="metro-input"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.youtube.com/@channelname or /channel/UC..."
-              autoFocus
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Paste any YouTube channel link (handle, /channel/, /c/, /user/)
+
+      <div className="relative w-full max-w-md animate-m3-in overflow-hidden rounded-m3-xl bg-surface-container-high text-on-surface shadow-m3-3">
+        <div className="flex items-start justify-between p-6 pb-2">
+          <div>
+            <h2 className="text-2xl font-normal leading-8">Add channel</h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Paste a YouTube channel link to add it to your list.
             </p>
           </div>
-          {error && (
-            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-            </div>
-          )}
-          <div className="flex gap-3 pt-1">
+          <button
+            onClick={onClose}
+            className="m3-icon-btn -mr-2 -mt-1"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="px-6 pt-2">
+            <label
+              htmlFor="channel-url"
+              className="mb-2 block text-xs font-medium uppercase tracking-wide text-on-surface-variant"
+            >
+              Channel link
+            </label>
+            <input
+              id="channel-url"
+              className="m3-text-field"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://www.youtube.com/@channelname"
+              autoFocus
+            />
+            <p className="mt-2 text-xs text-on-surface-variant">
+              Works with @handles, /channel/, /c/ and /user/ links.
+            </p>
+
+            {error && (
+              <div className="mt-4 rounded-m3-md bg-error-container px-4 py-3 text-sm text-on-error-container">
+                {error}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 p-6 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 metro-btn-ghost"
+              className="m3-btn m3-btn-text"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 metro-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="m3-btn m3-btn-filled"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Adding...
+                  <Loader2 className="h-4 w-4 animate-m3-spin" />
+                  Adding…
                 </>
               ) : (
-                <>
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Add Channel
-                </>
+                'Add channel'
               )}
             </button>
           </div>

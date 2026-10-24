@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Youtube } from 'lucide-react'
 import ChannelCard from '@/components/ChannelCard'
 import AddChannelDialog from '@/components/AddChannelDialog'
 import EmptyState from '@/components/EmptyState'
+import ThemeToggle from '@/components/ThemeToggle'
 import { getChannels, removeChannel } from '@/lib/index'
 
 interface ChannelListItem {
@@ -24,7 +25,6 @@ export default function HomePage() {
   const router = useRouter()
   const [channels, setChannels] = useState<ChannelListItem[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [removing, setRemoving] = useState<string | null>(null)
 
   const loadChannels = useCallback(() => {
     setChannels(getChannels())
@@ -40,54 +40,50 @@ export default function HomePage() {
   }
 
   const handleRemove = (id: string) => {
-    setRemoving(id)
     setChannels(removeChannel(id))
-    setRemoving(null)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-950/60 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-2xl bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
-                M
-              </div>
-              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-gray-100">
-                MetroList
-              </span>
+    <div className="min-h-screen bg-surface text-on-surface">
+      {/* M3 top app bar */}
+      <header className="sticky top-0 z-20 bg-surface backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-m3-md bg-primary-container text-on-primary-container">
+              <Youtube className="h-5 w-5" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
-                {channels.length} channel{channels.length !== 1 ? 's' : ''}
-              </span>
-              <button
-                onClick={() => setDialogOpen(true)}
-                className="metro-btn-primary"
-              >
-                <Plus className="w-4 h-4" /> Add
-              </button>
+            <div className="leading-tight">
+              <h1 className="text-lg font-medium tracking-tight">MetroList</h1>
+              <p className="text-[11px] text-on-surface-variant">YouTube channels</p>
             </div>
           </div>
+
+          <div className="flex items-center gap-2">
+            {channels.length > 0 && (
+              <span className="m3-chip hidden sm:inline-flex">
+                {channels.length} channel{channels.length !== 1 ? 's' : ''}
+              </span>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
+        <div className="m3-divider" />
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-8 sm:px-6">
+        <section className="mb-8">
+          <h2 className="text-[28px] font-normal leading-9 tracking-tight text-on-surface">
             Your Channels
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-on-surface-variant">
             Browse each channel&apos;s latest videos. Tap a channel to open it.
           </p>
-        </div>
+        </section>
 
         {channels.length === 0 ? (
           <EmptyState onAdd={() => setDialogOpen(true)} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {channels.map((channel) => (
               <ChannelCard
                 key={channel.id}
@@ -98,6 +94,16 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      {/* Extended FAB */}
+      <button
+        onClick={() => setDialogOpen(true)}
+        className="m3-fab fixed bottom-6 right-6 z-30"
+        aria-label="Add channel"
+      >
+        <Plus className="h-5 w-5" />
+        <span>Add channel</span>
+      </button>
 
       <AddChannelDialog
         open={dialogOpen}

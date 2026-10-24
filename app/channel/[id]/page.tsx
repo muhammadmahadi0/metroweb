@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Loader2, SearchX, ExternalLink } from 'lucide-react'
 import { getChannels, Channel } from '@/lib/index'
 import ChannelHeader from '@/components/ChannelHeader'
 import VideoGrid from '@/components/VideoGrid'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface Video {
   videoId: string
@@ -60,23 +61,25 @@ export default function ChannelPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex min-h-screen items-center justify-center bg-surface">
+        <Loader2 className="h-8 w-8 animate-m3-spin text-primary" />
       </div>
     )
   }
 
   if (notFound || !channel) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 dark:bg-gray-950 px-6 text-center">
-        <AlertCircle className="w-12 h-12 text-gray-400" />
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface px-6 text-center">
+        <div className="flex h-24 w-24 items-center justify-center rounded-m3-full bg-surface-container-high text-on-surface-variant">
+          <SearchX className="h-11 w-11" />
+        </div>
+        <h1 className="text-2xl font-normal text-on-surface">
           Channel not found
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+        <p className="max-w-sm text-sm text-on-surface-variant">
           This channel isn&apos;t in your list. It may have been removed.
         </p>
-        <Link href="/" className="metro-btn-primary">
+        <Link href="/" className="m3-btn m3-btn-filled mt-2">
           Back to channels
         </Link>
       </div>
@@ -84,46 +87,55 @@ export default function ChannelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-surface text-on-surface">
+      {/* M3 top app bar */}
+      <header className="sticky top-0 z-20 bg-surface backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/')}
-              className="metro-btn-ghost"
+              className="m3-icon-btn"
+              aria-label="Back"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
+              <ArrowLeft className="h-5 w-5" />
             </button>
-            <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-              {videos.length} video{videos.length !== 1 ? 's' : ''}
+            <span className="max-w-[45vw] truncate text-base font-medium">
+              {channel.title}
             </span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="m3-chip hidden sm:inline-flex">
+              {videos.length} video{videos.length !== 1 ? 's' : ''}
+            </span>
+            <ThemeToggle />
+          </div>
         </div>
+        <div className="m3-divider" />
       </header>
 
       <ChannelHeader channel={channel} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {apiError && (
-          <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 mb-6">
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              {apiError}
-            </p>
+          <div className="mb-6 rounded-m3-lg bg-error-container px-5 py-4 text-on-error-container">
+            <p className="text-sm">{apiError}</p>
             <a
               href={channel.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium underline-offset-2 hover:underline"
             >
-              Open this channel on YouTube instead →
+              Open this channel on YouTube
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
         )}
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Latest Videos
-        </h2>
+
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-medium text-on-surface">Latest videos</h2>
+        </div>
         <VideoGrid videos={videos} />
-      </div>
+      </main>
     </div>
   )
 }
