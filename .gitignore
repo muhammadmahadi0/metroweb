@@ -25,3 +25,6 @@ yarn-error.log*
 build*.log
 .next-wasm/
 @next/
+
+# Local server log
+server.log
