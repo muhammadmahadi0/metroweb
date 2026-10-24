@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Play } from 'lucide-react'
 
 interface Video {
@@ -47,11 +48,9 @@ export default function VideoGrid({ videos }: VideoGridProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {videos.map((video) => (
-        <a
+        <Link
           key={video.videoId}
-          href={video.watchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/watch/${video.videoId}`}
           className="m3-card group block overflow-hidden"
         >
           <div className="relative aspect-video w-full overflow-hidden bg-surface-container-high">
@@ -79,7 +78,7 @@ export default function VideoGrid({ videos }: VideoGridProps) {
               {formatRelative(video.publishedAt)}
             </p>
           </div>
-        </a>
+        </Link>
       ))}
     </div>
   )
