@@ -1,26 +1,22 @@
 'use client'
 
 import { Plus, Youtube } from 'lucide-react'
+import { useAppShell } from '@/lib/app-shell'
 
-interface EmptyStateProps {
-  onAdd: () => void
-}
+export default function EmptyState() {
+  const { openAddChannel } = useAppShell()
 
-export default function EmptyState({ onAdd }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-m3-xl bg-surface-container-low px-6 py-20 text-center">
-      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-m3-full bg-primary-container text-on-primary-container">
-        <Youtube className="h-11 w-11" />
+    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-yt-chip">
+        <Youtube className="h-12 w-12 text-yt-secondary" />
       </div>
-      <h2 className="text-2xl font-normal leading-8 text-on-surface">
-        No channels yet
-      </h2>
-      <p className="mt-2 max-w-sm text-sm text-on-surface-variant">
-        Add a YouTube channel by pasting its link to start building your
-        personal list.
+      <h2 className="text-2xl font-semibold text-yt-text">No channels yet</h2>
+      <p className="mt-2 max-w-md text-sm text-yt-secondary">
+        Add a YouTube channel to start building your feed.
       </p>
-      <button onClick={onAdd} className="m3-btn m3-btn-filled mt-6">
-        <Plus className="h-4 w-4" />
+      <button onClick={openAddChannel} className="yt-btn yt-btn-red mt-6">
+        <Plus className="h-5 w-5" />
         Add channel
       </button>
     </div>

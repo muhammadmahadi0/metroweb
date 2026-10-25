@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, ExternalLink, AlertTriangle, Play } from 'lucide-react'
-import ThemeToggle from '@/components/ThemeToggle'
+import { useParams } from 'next/navigation'
+import { Loader2, Play, Share2 } from 'lucide-react'
+import { useChannels } from '@/lib/useChannels'
+import { useFeed } from '@/lib/useFeed'
+import VideoListItem from '@/components/VideoListItem'
 
 interface VideoData {
   videoId: string
@@ -22,16 +24,16 @@ interface VideoData {
   error?: string
 }
 
-function formatCount(n?: number): string {
-  if (!n) return ''
-  return new Intl.NumberFormat('en', { notation: 'compact' }).format(n)
+function formatCount(value?: number): string {
+  if (!value) return ''
+  return new Intl.NumberFormat('en', { notation: 'compact' }).format(value)
 }
 
-function formatDate(iso?: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleDateString(undefined, {
+function formatDate(value?: string): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -40,24 +42,27 @@ function formatDate(iso?: string): string {
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return ''
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-  return h > 0
-    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${m}:${String(s).padStart(2, '0')}`
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = Math.floor(seconds % 60)
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    : `${minutes}:${String(secs).padStart(2, '0')}`
 }
 
 export default function WatchPage() {
   const params = useParams<{ id: string }>()
-  const router = useRouter()
   const id = params?.id
+
+  const { channels } = useChannels()
+  const { videos: feed } = useFeed(channels)
 
   const [data, setData] = useState<VideoData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [useEmbed, setUseEmbed] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -89,38 +94,36 @@ export default function WatchPage() {
     }
   }, [id])
 
-  const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`
+  async function share() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const upNext = feed.filter((video) => video.videoId !== id).slice(0, 12)
+  const channelThumbnail = channels.find(
+    (channel) => channel.channelId === data?.channelId
+  )?.thumbnail
+
+  const views = data?.viewCount ? `${formatCount(data.viewCount)} views` : ''
+  const date = formatDate(data?.publishDate)
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <header className="sticky top-0 z-20 bg-surface backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2">
-            <button
-              onClick={() => router.back()}
-              className="m3-icon-btn"
-              aria-label="Back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <span className="truncate text-base font-medium">Now playing</span>
-          </div>
-          <ThemeToggle />
-        </div>
-        <div className="m3-divider" />
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        {/* Player */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-m3-lg bg-black shadow-m3-2">
+    <div className="mx-auto flex max-w-[1750px] flex-col gap-6 lg:flex-row lg:px-6 lg:py-6">
+      <div className="min-w-0 flex-1">
+        <div className="relative aspect-video w-full overflow-hidden bg-black lg:rounded-xl">
           {loading ? (
             <div className="flex h-full w-full items-center justify-center">
-              <Loader2 className="h-9 w-9 animate-m3-spin text-white/80" />
+              <Loader2 className="h-9 w-9 animate-spin text-white/80" />
             </div>
           ) : useEmbed ? (
             <iframe
-              key={embedUrl}
-              src={embedUrl}
+              key={id}
+              src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
               title={data?.title || 'YouTube video'}
               className="h-full w-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -145,85 +148,98 @@ export default function WatchPage() {
           )}
         </div>
 
-        {error && useEmbed && (
-          <div className="mt-4 flex items-start gap-3 rounded-m3-md bg-surface-container-high px-4 py-3 text-sm text-on-surface-variant">
-            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-tertiary" />
-            <p>
-              InnerTube stream unavailable — playing with the YouTube embed
-              player instead.
-            </p>
+        <div className="px-4 pt-3 lg:px-0">
+          <h1 className="text-lg font-semibold leading-6 text-yt-text sm:text-xl">
+            {data?.title || 'YouTube video'}
+          </h1>
+
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-yt-secondary">
+            {views ? <span>{views}</span> : null}
+            {views && date ? <span>·</span> : null}
+            {date ? <span>{date}</span> : null}
           </div>
-        )}
 
-        {/* Info */}
-        <section className="mt-6">
-          {loading ? (
-            <div className="space-y-3">
-              <div className="h-7 w-3/4 animate-pulse rounded-m3-sm bg-surface-container-high" />
-              <div className="h-4 w-1/3 animate-pulse rounded-m3-sm bg-surface-container-high" />
-            </div>
-          ) : (
-            <>
-              <h1 className="text-xl font-medium leading-7 text-on-surface sm:text-2xl sm:leading-8">
-                {data?.title || 'YouTube video'}
-              </h1>
-
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
-                {data?.author && (
-                  <span className="font-medium text-on-surface">
-                    {data.author}
-                  </span>
-                )}
-                {data?.viewCount ? (
-                  <span>· {formatCount(data.viewCount)} views</span>
-                ) : null}
-                {data?.publishDate ? (
-                  <span>· {formatDate(data.publishDate)}</span>
-                ) : null}
-                {data?.durationSeconds ? (
-                  <span>· {formatDuration(data.durationSeconds)}</span>
-                ) : null}
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {data?.quality && (
-                  <span className="m3-chip">{data.quality}</span>
-                )}
-                <span className="m3-chip">InnerTube</span>
-                <a
-                  href={`https://www.youtube.com/watch?v=${id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="m3-btn m3-btn-text -ml-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open on YouTube
-                </a>
-              </div>
-
-              {data?.description && (
-                <div className="mt-5 rounded-m3-lg bg-surface-container-low p-5">
-                  <p
-                    className={`whitespace-pre-line text-sm leading-6 text-on-surface-variant ${
-                      expanded ? '' : 'line-clamp-4'
-                    }`}
-                  >
-                    {data.description}
-                  </p>
-                  {data.description.length > 320 && (
-                    <button
-                      onClick={() => setExpanded((v) => !v)}
-                      className="mt-2 text-sm font-medium text-primary hover:underline"
-                    >
-                      {expanded ? 'Show less' : 'Show more'}
-                    </button>
-                  )}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {channelThumbnail ? (
+                <img
+                  src={channelThumbnail}
+                  alt=""
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yt-chip text-sm font-medium">
+                  {(data?.author || '?').slice(0, 1).toUpperCase()}
                 </div>
               )}
-            </>
-          )}
-        </section>
-      </main>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-yt-text">
+                  {data?.author || 'Unknown channel'}
+                </p>
+                <p className="text-xs text-yt-secondary">Channel</p>
+              </div>
+            </div>
+
+            <button onClick={share} className="yt-btn yt-btn-tonal">
+              <Share2 className="h-4 w-4" />
+              {copied ? 'Copied' : 'Share'}
+            </button>
+          </div>
+
+          {error && useEmbed ? (
+            <div className="mt-4 rounded-xl bg-yt-chip p-3 text-sm text-yt-secondary">
+              InnerTube stream unavailable — playing with the YouTube embed
+              player instead.
+            </div>
+          ) : null}
+
+          {data?.description ? (
+            <div className="mt-4 rounded-xl bg-yt-chip p-3">
+              <p className="text-sm font-medium text-yt-text">
+                {[views, date].filter(Boolean).join(' · ')}
+              </p>
+              <p
+                className={`mt-1 whitespace-pre-line text-sm text-yt-text ${
+                  expanded ? '' : 'line-clamp-3'
+                }`}
+              >
+                {data.description}
+              </p>
+              {data.description.length > 300 ? (
+                <button
+                  onClick={() => setExpanded((value) => !value)}
+                  className="mt-1 text-sm font-medium text-yt-text hover:underline"
+                >
+                  {expanded ? 'Show less' : 'Show more'}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {data?.durationSeconds ? (
+            <p className="mt-3 text-xs text-yt-secondary">
+              Duration {formatDuration(data.durationSeconds)}
+              {data.quality ? ` · ${data.quality}` : ''}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <aside className="w-full flex-shrink-0 pb-6 lg:w-[402px] lg:pb-0">
+        <h2 className="px-4 pb-3 text-base font-medium text-yt-text lg:px-0">
+          Up next
+        </h2>
+        <div className="space-y-3 px-4 lg:px-0">
+          {upNext.map((video) => (
+            <VideoListItem key={video.videoId} video={video} compact />
+          ))}
+          {upNext.length === 0 && !loading ? (
+            <p className="text-sm text-yt-secondary">
+              Add more channels to see recommendations here.
+            </p>
+          ) : null}
+        </div>
+      </aside>
     </div>
   )
 }

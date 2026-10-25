@@ -15,6 +15,9 @@ export interface Video {
   thumbnail: string
   channelTitle: string
   publishedAt: string
+  publishedText?: string
+  viewCountText?: string
+  durationText?: string
   channelId: string
   watchUrl: string
 }
@@ -28,6 +31,7 @@ export interface ResolvedChannel {
 }
 
 export const STORAGE_KEY = 'metrolist_channels'
+export const CHANNELS_EVENT = 'metrolist:channels'
 
 export function getChannels(): Channel[] {
   if (typeof window === 'undefined') return []
@@ -44,6 +48,7 @@ export function saveChannels(channels: Channel[]): void {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(channels))
+    window.dispatchEvent(new Event(CHANNELS_EVENT))
   } catch {
     // ignore quota errors
   }
@@ -51,7 +56,7 @@ export function saveChannels(channels: Channel[]): void {
 
 export function addChannel(channel: Channel): Channel[] {
   const channels = getChannels()
-  const next = [channel, ...channels]
+  const next = [channel, ...channels.filter((c) => c.channelId !== channel.channelId)]
   saveChannels(next)
   return next
 }

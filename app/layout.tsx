@@ -1,9 +1,10 @@
 import './globals.css'
+import AppShell from '@/components/AppShell'
 
 export const metadata = {
-  title: 'MetroList — Your YouTube Channels',
+  title: 'MetroList',
   description:
-    'A web-based clone of MetroList. Add YouTube channels by link and browse their videos.',
+    'A YouTube-style feed for the channels you follow, built with Next.js.',
 }
 
 const themeScript = `(function(){try{var t=localStorage.getItem('metrolist-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`
@@ -28,7 +29,9 @@ export default function RootLayout({
         />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="antialiased">{children}</body>
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   )
 }

@@ -19,18 +19,22 @@ The original MetroList is a YouTube Music client for Android. This clone is a **
 - ✅ Latest videos per channel, fetched via InnerTube (no API key)
 - ✅ Remove channels
 - ✅ **In-app playback via YouTube InnerTube** — videos play inside the app instead of opening YouTube
-- ✅ **Material 3 (Material You) design system** — tonal color tokens, elevation, extended FAB, rounded cards, dialog, light/dark themes
-- ✅ Responsive grid, theme toggle (persisted), client-side navigation
+- ✅ **YouTube-style layout** — desktop sidebar, centered search, video grid, watch page with “Up next”, and a mobile bottom nav
+- ✅ **Search across your channels** — search results include matching added channels and videos from their uploads
+- ✅ Light/dark theme toggle (persisted), responsive desktop + mobile layouts
 - ✅ Persisted in `localStorage`
 
 ## Design
 
-The UI implements a Material 3 design system from scratch:
+The UI mirrors YouTube's layout and visual language:
 
-- Tonal color roles (`primary`, `secondary`, `tertiary`, `surface-container-*`, `outline`, `error`, …) defined as CSS variables for light and dark schemes.
-- M3 elevation levels (`shadow-m3-1` … `shadow-m3-4`).
-- Components: filled/tonal/text/outlined buttons, extended FAB, icon buttons, filled text field, chips, cards, dialog with scrim, empty state.
-- Roboto typography and a no-flash theme script.
+- Sticky header with logo, centered search bar, and add-channel action.
+- Desktop guide sidebar (collapsible to a mini rail) listing Home and your channels.
+- Mobile drawer plus a fixed bottom navigation bar.
+- YouTube-style video cards (rounded thumbnails, duration badges, channel avatars) and list rows.
+- Channel page with banner, avatar, description, and a Videos tab.
+- Watch page with a two-column layout and an “Up next” rail.
+- Light/dark theme tokens (`--yt-*`) and Roboto typography.
 
 ## Getting started
 
@@ -54,6 +58,15 @@ Everything works out of the box:
 
 There are no environment variables to configure.
 
+## Search
+
+The header search bar (or the Search tab on mobile) opens `/search?q=…` and searches **only the channels you added**:
+
+- Matching channels by title or description.
+- Matching videos by title or channel name, pulled from those channels' uploads.
+
+The home feed aggregates the latest videos from every added channel, sorted by approximate recency, with filter chips per channel.
+
 ## Video playback (InnerTube)
 
 Clicking a video opens `/watch/<videoId>`, which plays in-app:
@@ -62,7 +75,7 @@ Clicking a video opens `/watch/<videoId>`, which plays in-app:
 2. `GET /api/video/<id>/stream?itag=18` proxies the googlevideo stream. googlevideo URLs are IP-bound to the machine that requested them, so the proxy re-mints them server-side and forwards `Range` requests in 4 MB chunks (keeps each serverless invocation short).
 3. If InnerTube extraction is blocked (for example, a datacenter IP challenge), the player automatically falls back to the official YouTube embed, so playback still works.
 
-> Streaming is intended for personal/demo use. Higher resolutions (1080p+) use adaptive video-only streams that require MSE and are not implemented; use “Open on YouTube” for full quality.
+> Streaming is intended for personal/demo use. Playback uses the progressive 360p stream; higher resolutions use adaptive video-only streams that would require an MSE player.
 
 ## Tech stack
 

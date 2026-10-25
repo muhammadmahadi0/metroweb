@@ -26,5 +26,5 @@ build*.log
 .next-wasm/
 @next/
 
-# Local server log
-server.log
+# Local server logs
+server*.log

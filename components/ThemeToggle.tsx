@@ -26,14 +26,14 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="m3-icon-btn"
+      className="yt-icon-btn"
       aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
       title={dark ? 'Light theme' : 'Dark theme'}
     >
       {mounted && dark ? (
-        <Sun className="h-5 w-5" />
+        <Sun className="h-6 w-6" />
       ) : (
-        <Moon className="h-5 w-5" />
+        <Moon className="h-6 w-6" />
       )}
     </button>
   )

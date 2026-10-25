@@ -186,6 +186,8 @@ export interface ChannelVideo {
   publishedText: string
   /** Human-readable view count, e.g. "110,318 views". */
   viewCountText: string
+  /** Human-readable duration, e.g. "3:51". */
+  durationText: string
   channelId: string
   watchUrl: string
 }
@@ -297,6 +299,7 @@ export async function getChannelVideos(
       viewCountText:
         runsText(renderer.viewCountText) ||
         runsText(renderer.shortViewCountText),
+      durationText: runsText(renderer.lengthText),
       channelId,
       watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
     })

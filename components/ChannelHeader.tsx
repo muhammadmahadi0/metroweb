@@ -1,72 +1,73 @@
 'use client'
 
-import { ExternalLink, Youtube } from 'lucide-react'
+import type { Channel } from '@/lib/index'
 
-interface ChannelHeaderProps {
-  channel: {
-    title: string
-    description: string
-    thumbnail: string
-    url: string
-  }
-}
-
-export default function ChannelHeader({ channel }: ChannelHeaderProps) {
+export default function ChannelHeader({
+  channel,
+  videoCount,
+  onRemove,
+}: {
+  channel: Channel
+  videoCount: number
+  onRemove: () => void
+}) {
   return (
-    <div className="mx-auto mt-4 max-w-6xl px-4 sm:px-6">
-      <div className="relative overflow-hidden rounded-m3-xl bg-surface-container-high shadow-m3-1">
-        {/* Backdrop */}
-        <div className="absolute inset-0">
+    <div>
+      {/* Banner */}
+      <div className="relative h-24 w-full overflow-hidden bg-yt-chip sm:h-40 lg:h-48">
+        {channel.thumbnail ? (
+          <img
+            src={channel.thumbnail}
+            alt=""
+            className="h-full w-full scale-110 object-cover opacity-40 blur-2xl"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-r from-yt-bg/40 via-transparent to-yt-bg/40" />
+      </div>
+
+      <div className="px-4 pt-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
           {channel.thumbnail ? (
             <img
               src={channel.thumbnail}
               alt=""
-              className="h-full w-full scale-110 object-cover opacity-40 blur-2xl"
+              className="-mt-10 h-20 w-20 flex-shrink-0 rounded-full border-4 border-yt-bg object-cover sm:-mt-14 sm:h-32 sm:w-32"
             />
-          ) : null}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-container to-tertiary-container opacity-40" />
+          ) : (
+            <div className="-mt-10 flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-4 border-yt-bg bg-yt-chip text-2xl font-medium sm:-mt-14 sm:h-32 sm:w-32">
+              {channel.title.slice(0, 1).toUpperCase()}
+            </div>
+          )}
 
-        {/* Content */}
-        <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
-          <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-m3-xl bg-surface-container-highest shadow-m3-2 sm:h-28 sm:w-28">
-            {channel.thumbnail ? (
-              <img
-                src={channel.thumbnail}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-on-surface-variant">
-                <Youtube className="h-10 w-10" />
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <span className="m3-chip mb-2">
-              <Youtube className="h-3.5 w-3.5" />
-              YouTube channel
-            </span>
-            <h1 className="truncate text-[28px] font-medium leading-9 tracking-tight text-on-surface">
+          <div className="min-w-0 flex-1 text-center sm:pt-2 sm:text-left">
+            <h1 className="text-2xl font-bold text-yt-text sm:text-3xl">
               {channel.title}
             </h1>
-            {channel.description && (
-              <p className="mt-1 line-clamp-2 max-w-2xl text-sm text-on-surface-variant">
+            <p className="mt-1 text-sm text-yt-secondary">
+              Channel · {videoCount} video{videoCount === 1 ? '' : 's'}
+            </p>
+            {channel.description ? (
+              <p className="mt-1 line-clamp-2 max-w-3xl text-sm text-yt-secondary">
                 {channel.description}
               </p>
-            )}
+            ) : null}
           </div>
 
-          <a
-            href={channel.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="m3-btn m3-btn-tonal self-start sm:self-center"
+          <button
+            onClick={onRemove}
+            className="yt-btn yt-btn-tonal flex-shrink-0 sm:mt-2"
           >
-            <ExternalLink className="h-4 w-4" />
-            Open on YouTube
-          </a>
+            Remove channel
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="mt-6 border-b border-yt-border">
+          <div className="flex gap-8">
+            <span className="border-b-2 border-yt-text px-1 pb-3 text-sm font-medium text-yt-text">
+              Videos
+            </span>
+          </div>
         </div>
       </div>
     </div>
