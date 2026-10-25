@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useChannels } from '@/lib/useChannels'
 import { useFeed } from '@/lib/useFeed'
+import { useChannelPlaylists } from '@/lib/usePlaylists'
 import { removeChannel } from '@/lib/index'
-import ChannelHeader from '@/components/ChannelHeader'
+import ChannelHeader, { type ChannelTab } from '@/components/ChannelHeader'
 import VideoGrid, { SkeletonGrid } from '@/components/VideoGrid'
+import PlaylistGrid from '@/components/PlaylistGrid'
 
 export default function ChannelPage() {
   const params = useParams<{ id: string }>()
@@ -15,6 +18,10 @@ export default function ChannelPage() {
   const { channels, ready } = useChannels()
   const channel = channels.find((item) => item.id === id)
   const { videos, loading } = useFeed(channel ? [channel] : [])
+  const { playlists, loading: playlistsLoading } = useChannelPlaylists(
+    channel?.channelId
+  )
+  const [activeTab, setActiveTab] = useState<ChannelTab>('videos')
 
   if (!ready) {
     return (
@@ -55,11 +62,18 @@ export default function ChannelPage() {
       <ChannelHeader
         channel={channel}
         videoCount={videos.length}
+        playlistCount={playlists.length}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onRemove={handleRemove}
       />
 
       <div className="px-4 pt-6 sm:px-6 lg:px-8">
-        <VideoGrid videos={videos} loading={loading} />
+        {activeTab === 'videos' ? (
+          <VideoGrid videos={videos} loading={loading} />
+        ) : (
+          <PlaylistGrid playlists={playlists} loading={playlistsLoading} />
+        )}
       </div>
     </div>
   )

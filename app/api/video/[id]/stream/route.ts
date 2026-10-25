@@ -19,7 +19,7 @@ const CHUNK_SIZE = 4 * 1024 * 1024
 
 const UPSTREAM_HEADERS = {
   'User-Agent':
-    'com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12; GB) gzip',
+    'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
   Referer: 'https://www.youtube.com/',
   Origin: 'https://www.youtube.com',
 }

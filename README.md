@@ -19,6 +19,8 @@ The original MetroList is a YouTube Music client for Android. This clone is a **
 - ✅ Latest videos per channel, fetched via InnerTube (no API key)
 - ✅ Remove channels
 - ✅ **In-app playback via YouTube InnerTube** — videos play inside the app instead of opening YouTube
+- ✅ **Audio-first playback** — starts in audio-only mode with an Audio/Video switch
+- ✅ **Channel playlists** — browse a channel's playlists, open a playlist, and play through it with auto-advance
 - ✅ **YouTube-style layout** — desktop sidebar, centered search, video grid, watch page with “Up next”, and a mobile bottom nav
 - ✅ **Search across your channels** — search results include matching added channels and videos from their uploads
 - ✅ Light/dark theme toggle (persisted), responsive desktop + mobile layouts
@@ -67,15 +69,25 @@ The header search bar (or the Search tab on mobile) opens `/search?q=…` and se
 
 The home feed aggregates the latest videos from every added channel, sorted by approximate recency, with filter chips per channel.
 
+## Channel playlists
+
+Every channel page has **Videos** and **Playlists** tabs:
+
+- The **Playlists** tab lists the channel's public playlists, fetched via the InnerTube `browse` endpoint.
+- Opening a playlist (`/playlist/<id>`) shows its title, description, video count, and a numbered video list with a **Play all** button.
+- Playing a video from a playlist adds a playlist queue to the watch page sidebar. When a video ends, the next one in the playlist starts automatically.
+
 ## Video playback (InnerTube)
 
-Clicking a video opens `/watch/<videoId>`, which plays in-app:
+Clicking a video opens `/watch/<videoId>`, which plays in-app. Playback starts in **audio-only mode** by default; use the **Audio / Video** switch next to the channel row to switch to video (the choice is remembered).
 
-1. `GET /api/video/<id>` calls YouTube's internal `youtubei/v1/player` endpoint using the `ANDROID_VR` client and returns metadata plus the best progressive stream (`itag 18`, 360p MP4 with audio).
-2. `GET /api/video/<id>/stream?itag=18` proxies the googlevideo stream. googlevideo URLs are IP-bound to the machine that requested them, so the proxy re-mints them server-side and forwards `Range` requests in 4 MB chunks (keeps each serverless invocation short).
+1. `GET /api/video/<id>` calls YouTube's internal `youtubei/v1/player` endpoint using the `ANDROID` client (browse/channel calls use `ANDROID_VR`) and returns metadata plus:
+   - the best audio-only adaptive stream (prefers AAC/MP4, e.g. `itag 140`), used by the default audio player;
+   - the best progressive stream (`itag 18`, 360p MP4 with audio), used by video mode.
+2. `GET /api/video/<id>/stream?itag=<itag>` proxies the googlevideo stream. googlevideo URLs are IP-bound to the machine that requested them, so the proxy re-mints them server-side and forwards `Range` requests in 4 MB chunks (keeps each serverless invocation short).
 3. If InnerTube extraction is blocked (for example, a datacenter IP challenge), the player automatically falls back to the official YouTube embed, so playback still works.
 
-> Streaming is intended for personal/demo use. Playback uses the progressive 360p stream; higher resolutions use adaptive video-only streams that would require an MSE player.
+> Streaming is intended for personal/demo use. Video mode uses the progressive 360p stream; higher resolutions use adaptive video-only streams that would require an MSE player.
 
 ## Tech stack
 

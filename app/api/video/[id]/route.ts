@@ -15,7 +15,8 @@ export async function GET(
 
   try {
     const data = await getPlayerData(id)
-    const itag = data.bestProgressive?.itag
+    const videoItag = data.bestProgressive?.itag
+    const audioItag = data.bestAudio?.itag
 
     return NextResponse.json({
       videoId: data.videoId,
@@ -28,8 +29,11 @@ export async function GET(
       publishDate: data.publishDate,
       description: data.description,
       quality: data.bestProgressive?.qualityLabel || null,
-      itag: itag ?? null,
-      streamUrl: itag ? `/api/video/${id}/stream?itag=${itag}` : null,
+      itag: videoItag ?? null,
+      streamUrl: videoItag ? `/api/video/${id}/stream?itag=${videoItag}` : null,
+      audioItag: audioItag ?? null,
+      audioUrl: audioItag ? `/api/video/${id}/stream?itag=${audioItag}` : null,
+      audioQuality: data.bestAudio?.audioQuality || null,
       embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`,
       watchUrl: `https://www.youtube.com/watch?v=${id}`,
     })
@@ -37,6 +41,8 @@ export async function GET(
     return NextResponse.json(
       {
         error: err?.message || 'Unable to load this video',
+        streamUrl: null,
+        audioUrl: null,
         embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`,
         watchUrl: `https://www.youtube.com/watch?v=${id}`,
       },

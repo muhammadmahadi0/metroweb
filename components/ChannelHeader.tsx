@@ -2,13 +2,21 @@
 
 import type { Channel } from '@/lib/index'
 
+export type ChannelTab = 'videos' | 'playlists'
+
 export default function ChannelHeader({
   channel,
   videoCount,
+  playlistCount,
+  activeTab,
+  onTabChange,
   onRemove,
 }: {
   channel: Channel
   videoCount: number
+  playlistCount: number
+  activeTab: ChannelTab
+  onTabChange: (tab: ChannelTab) => void
   onRemove: () => void
 }) {
   return (
@@ -45,6 +53,9 @@ export default function ChannelHeader({
             </h1>
             <p className="mt-1 text-sm text-yt-secondary">
               Channel · {videoCount} video{videoCount === 1 ? '' : 's'}
+              {playlistCount > 0
+                ? ` · ${playlistCount} playlist${playlistCount === 1 ? '' : 's'}`
+                : ''}
             </p>
             {channel.description ? (
               <p className="mt-1 line-clamp-2 max-w-3xl text-sm text-yt-secondary">
@@ -64,9 +75,26 @@ export default function ChannelHeader({
         {/* Tabs */}
         <div className="mt-6 border-b border-yt-border">
           <div className="flex gap-8">
-            <span className="border-b-2 border-yt-text px-1 pb-3 text-sm font-medium text-yt-text">
+            <button
+              onClick={() => onTabChange('videos')}
+              className={`border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
+                activeTab === 'videos'
+                  ? 'border-yt-text text-yt-text'
+                  : 'border-transparent text-yt-secondary hover:text-yt-text'
+              }`}
+            >
               Videos
-            </span>
+            </button>
+            <button
+              onClick={() => onTabChange('playlists')}
+              className={`border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
+                activeTab === 'playlists'
+                  ? 'border-yt-text text-yt-text'
+                  : 'border-transparent text-yt-secondary hover:text-yt-text'
+              }`}
+            >
+              Playlists
+            </button>
           </div>
         </div>
       </div>
