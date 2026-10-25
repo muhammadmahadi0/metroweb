@@ -34,6 +34,7 @@ export async function GET(
       audioItag: audioItag ?? null,
       audioUrl: audioItag ? `/api/video/${id}/stream?itag=${audioItag}` : null,
       audioQuality: data.bestAudio?.audioQuality || null,
+      client: data.playerClient || null,
       embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`,
       watchUrl: `https://www.youtube.com/watch?v=${id}`,
     })

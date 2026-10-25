@@ -34,25 +34,101 @@ const CLIENT_HEADERS = {
 }
 
 /**
- * The ANDROID_VR client is bot-challenged on the player endpoint, so playback
- * uses the regular ANDROID client instead. Browse (channels/playlists) still
- * uses ANDROID_VR, whose response shapes are parsed below.
+ * Playback clients, tried in order. Vercel/datacenter IPs are frequently
+ * bot-challenged on one client while another still works, so we fall through
+ * until one returns playable streams. ANDROID_VR is kept as a last resort.
  */
-const PLAYER_CLIENT = {
-  clientName: 'ANDROID',
-  clientVersion: '20.10.38',
-  androidSdkVersion: 34,
-  osName: 'Android',
-  osVersion: '14',
-  hl: 'en',
-  gl: 'US',
+interface PlayerClientConfig {
+  name: string
+  client: Record<string, unknown>
+  headers: Record<string, string>
 }
 
-const PLAYER_HEADERS = {
-  'Content-Type': 'application/json',
-  'User-Agent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
-  'X-YouTube-Client-Name': '3',
-  'X-YouTube-Client-Version': PLAYER_CLIENT.clientVersion,
+const PLAYER_CLIENTS: PlayerClientConfig[] = [
+  {
+    name: 'ANDROID',
+    client: {
+      clientName: 'ANDROID',
+      clientVersion: '20.10.38',
+      androidSdkVersion: 34,
+      osName: 'Android',
+      osVersion: '14',
+      hl: 'en',
+      gl: 'US',
+    },
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent':
+        'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
+      'X-YouTube-Client-Name': '3',
+      'X-YouTube-Client-Version': '20.10.38',
+    },
+  },
+  {
+    name: 'IOS',
+    client: {
+      clientName: 'IOS',
+      clientVersion: '20.10.4',
+      deviceMake: 'Apple',
+      deviceModel: 'iPhone16,2',
+      osName: 'iPhone',
+      osVersion: '18.3.2.22D82',
+      hl: 'en',
+      gl: 'US',
+    },
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent':
+        'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
+      'X-YouTube-Client-Name': '5',
+      'X-YouTube-Client-Version': '20.10.4',
+    },
+  },
+  {
+    name: 'ANDROID_VR',
+    client: { ...CLIENT },
+    headers: { ...CLIENT_HEADERS },
+  },
+]
+
+const VISITOR_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+
+let visitorCache: { value: string; expires: number } | null = null
+const VISITOR_TTL_MS = 60 * 60 * 1000
+
+/** Fetch a visitor id once per server instance; it improves player acceptance. */
+async function getVisitorData(): Promise<string> {
+  if (visitorCache && visitorCache.expires > Date.now()) {
+    return visitorCache.value
+  }
+
+  try {
+    const res = await fetch('https://www.youtube.com/', {
+      headers: {
+        'User-Agent': VISITOR_UA,
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      cache: 'no-store',
+    })
+    if (res.ok) {
+      const html = await res.text()
+      const match =
+        html.match(/"VISITOR_DATA":"([^"]+)"/) ||
+        html.match(/"visitorData":"([^"]+)"/)
+      if (match?.[1]) {
+        visitorCache = {
+          value: match[1],
+          expires: Date.now() + VISITOR_TTL_MS,
+        }
+        return match[1]
+      }
+    }
+  } catch {
+    /* visitor data is optional */
+  }
+
+  return ''
 }
 
 export interface StreamFormat {
@@ -88,6 +164,8 @@ export interface PlayerData {
   bestAudio?: StreamFormat
   /** Best adaptive video-only format, if any. */
   bestVideo?: StreamFormat
+  /** InnerTube client that produced this data. */
+  playerClient?: string
 }
 
 export function isValidVideoId(id: string): boolean {
@@ -188,6 +266,34 @@ function parsePlayerJson(json: any, videoId: string): PlayerData {
 const cache = new Map<string, { data: PlayerData; expires: number }>()
 const CACHE_TTL_MS = 10 * 60 * 1000
 
+async function fetchPlayerJson(
+  videoId: string,
+  config: PlayerClientConfig,
+  visitorData: string
+): Promise<any> {
+  const client = visitorData ? { ...config.client, visitorData } : config.client
+  const headers: Record<string, string> = { ...config.headers }
+  if (visitorData) headers['X-Goog-Visitor-Id'] = visitorData
+
+  const res = await fetch(PLAYER_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      context: { client },
+      videoId,
+      contentCheckOk: true,
+      racyCheckOk: true,
+    }),
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`)
+  }
+
+  return res.json()
+}
+
 export async function getPlayerData(videoId: string): Promise<PlayerData> {
   if (!isValidVideoId(videoId)) {
     throw new Error('Invalid video id')
@@ -198,26 +304,22 @@ export async function getPlayerData(videoId: string): Promise<PlayerData> {
     return cached.data
   }
 
-  const res = await fetch(PLAYER_URL, {
-    method: 'POST',
-    headers: PLAYER_HEADERS,
-    body: JSON.stringify({
-      context: { client: PLAYER_CLIENT },
-      videoId,
-      contentCheckOk: true,
-      racyCheckOk: true,
-    }),
-    cache: 'no-store',
-  })
+  const visitorData = await getVisitorData()
+  const failures: string[] = []
 
-  if (!res.ok) {
-    throw new Error(`InnerTube player request failed (${res.status})`)
+  for (const config of PLAYER_CLIENTS) {
+    try {
+      const json = await fetchPlayerJson(videoId, config, visitorData)
+      const data = parsePlayerJson(json, videoId)
+      data.playerClient = config.name
+      cache.set(videoId, { data, expires: Date.now() + CACHE_TTL_MS })
+      return data
+    } catch (err: any) {
+      failures.push(`${config.name}: ${err?.message || 'failed'}`)
+    }
   }
 
-  const json = await res.json()
-  const data = parsePlayerJson(json, videoId)
-  cache.set(videoId, { data, expires: Date.now() + CACHE_TTL_MS })
-  return data
+  throw new Error(`InnerTube playback unavailable — ${failures.join('; ')}`)
 }
 
 export function invalidatePlayerCache(videoId: string) {

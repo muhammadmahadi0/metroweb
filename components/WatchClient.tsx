@@ -27,6 +27,7 @@ interface VideoData {
   streamUrl: string | null
   audioUrl: string | null
   audioQuality?: string | null
+  client?: string | null
   embedUrl: string
   watchUrl: string
   error?: string
@@ -187,6 +188,9 @@ export default function WatchClient() {
   const views = data?.viewCount ? `${formatCount(data.viewCount)} views` : ''
   const date = formatDate(data?.publishDate)
   const audioSrc = data?.audioUrl || data?.streamUrl || null
+  const videoNeedsEmbed =
+    mode === 'video' && !data?.streamUrl && Boolean(data?.audioUrl)
+  const showEmbed = useEmbed || videoNeedsEmbed
 
   const playlistIndex = playlist
     ? playlist.videos.findIndex((video) => video.videoId === id)
@@ -210,7 +214,7 @@ export default function WatchClient() {
             <div className="flex h-full w-full items-center justify-center">
               <Loader2 className="h-9 w-9 animate-spin text-white/80" />
             </div>
-          ) : useEmbed ? (
+          ) : showEmbed ? (
             <iframe
               key={id}
               src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
@@ -368,8 +372,23 @@ export default function WatchClient() {
 
           {error && useEmbed ? (
             <div className="mt-4 rounded-xl bg-yt-chip p-3 text-sm text-yt-secondary">
-              InnerTube stream unavailable — playing with the YouTube embed
-              player instead.
+              <p className="font-medium text-yt-text">
+                InnerTube playback unavailable
+              </p>
+              <p className="mt-1 break-words">{error}</p>
+              <p className="mt-1">
+                Playing with the YouTube embed instead. If this keeps
+                happening, the deployment network is being blocked by
+                YouTube.
+              </p>
+            </div>
+          ) : null}
+
+          {videoNeedsEmbed ? (
+            <div className="mt-4 rounded-xl bg-yt-chip p-3 text-sm text-yt-secondary">
+              This network only returned an audio stream. Video mode is using
+              the YouTube embed — switch to <strong>Audio</strong> for the
+              in-app player.
             </div>
           ) : null}
 

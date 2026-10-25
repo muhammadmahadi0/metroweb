@@ -84,10 +84,11 @@ Clicking a video opens `/watch/<videoId>`, which plays in-app. Playback starts i
 1. `GET /api/video/<id>` calls YouTube's internal `youtubei/v1/player` endpoint using the `ANDROID` client (browse/channel calls use `ANDROID_VR`) and returns metadata plus:
    - the best audio-only adaptive stream (prefers AAC/MP4, e.g. `itag 140`), used by the default audio player;
    - the best progressive stream (`itag 18`, 360p MP4 with audio), used by video mode.
+   The player tries the `ANDROID`, `IOS`, and `ANDROID_VR` clients in order, with a cached visitor id, so a network that is bot-challenged on one client can still play through another.
 2. `GET /api/video/<id>/stream?itag=<itag>` proxies the googlevideo stream. googlevideo URLs are IP-bound to the machine that requested them, so the proxy re-mints them server-side and forwards `Range` requests in 4 MB chunks (keeps each serverless invocation short).
-3. If InnerTube extraction is blocked (for example, a datacenter IP challenge), the player automatically falls back to the official YouTube embed, so playback still works.
+3. If every InnerTube client is blocked (common on datacenter IPs such as Vercel's), the player automatically falls back to the official YouTube embed, so playback still works. When a client returns audio but no progressive video, audio mode stays in-app and video mode uses the embed.
 
-> Streaming is intended for personal/demo use. Video mode uses the progressive 360p stream; higher resolutions use adaptive video-only streams that would require an MSE player.
+> Streaming is intended for personal/demo use. Video mode uses the progressive 360p stream; higher resolutions use adaptive video-only streams that would require an MSE player. YouTube blocks many cloud/datacenter IP ranges; if InnerTube is consistently unavailable, run the app from a residential connection or add a PO token/cookie provider.
 
 ## Tech stack
 
