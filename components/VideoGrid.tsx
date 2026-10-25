@@ -10,6 +10,8 @@ interface Video {
   thumbnail: string
   channelTitle: string
   publishedAt: string
+  publishedText?: string
+  viewCountText?: string
   channelId: string
   watchUrl: string
 }
@@ -75,7 +77,13 @@ export default function VideoGrid({ videos }: VideoGridProps) {
               {video.channelTitle}
             </p>
             <p className="mt-0.5 text-[11px] text-on-surface-variant">
-              {formatRelative(video.publishedAt)}
+              {[
+                video.publishedText ||
+                  (video.publishedAt ? formatRelative(video.publishedAt) : ''),
+                video.viewCountText,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
           </div>
         </Link>

@@ -11,6 +11,7 @@
 
 const INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 const PLAYER_URL = `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_KEY}&prettyPrint=false`
+const BROWSE_URL = `https://www.youtube.com/youtubei/v1/browse?key=${INNERTUBE_KEY}&prettyPrint=false`
 
 const CLIENT = {
   clientName: 'ANDROID_VR',
@@ -168,3 +169,146 @@ export async function getPlayerData(videoId: string): Promise<PlayerData> {
 export function invalidatePlayerCache(videoId: string) {
   cache.delete(videoId)
 }
+
+/* ------------------------------------------------------------------ */
+/* Channel videos (browse endpoint)                                    */
+/* ------------------------------------------------------------------ */
+
+export interface ChannelVideo {
+  videoId: string
+  title: string
+  description: string
+  thumbnail: string
+  channelTitle: string
+  /** ISO date when known. InnerTube usually returns relative text instead. */
+  publishedAt: string
+  /** Human-readable relative date, e.g. "3 months ago". */
+  publishedText: string
+  /** Human-readable view count, e.g. "110,318 views". */
+  viewCountText: string
+  channelId: string
+  watchUrl: string
+}
+
+export interface ChannelVideosResult {
+  videos: ChannelVideo[]
+  channelTitle: string
+}
+
+function runsText(value: any): string {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (value.simpleText) return value.simpleText
+  if (Array.isArray(value.runs)) {
+    return value.runs.map((run: any) => run.text || '').join('')
+  }
+  return ''
+}
+
+/** Recursively collect every object stored under one of the given keys. */
+function collectRenderers(value: any, keys: Set<string>, out: any[] = []): any[] {
+  if (!value || typeof value !== 'object') return out
+  for (const [key, child] of Object.entries(value)) {
+    if (keys.has(key) && child && typeof child === 'object') {
+      out.push(child)
+    }
+    collectRenderers(child, keys, out)
+  }
+  return out
+}
+
+const VIDEO_RENDERERS = new Set([
+  'compactVideoRenderer',
+  'videoRenderer',
+  'gridVideoRenderer',
+  'playlistVideoRenderer',
+])
+
+/** Params for the channel "Videos" tab. */
+const CHANNEL_VIDEOS_PARAMS = 'EgZ2aWRlb3PyBgQKAjoA'
+
+const channelVideoCache = new Map<
+  string,
+  { result: ChannelVideosResult; expires: number }
+>()
+const CHANNEL_CACHE_TTL_MS = 5 * 60 * 1000
+
+export async function getChannelVideos(
+  channelId: string,
+  limit = 30
+): Promise<ChannelVideosResult> {
+  if (!/^UC[A-Za-z0-9_-]{22}$/.test(channelId)) {
+    throw new Error('Invalid channel id')
+  }
+
+  const cached = channelVideoCache.get(channelId)
+  if (cached && cached.expires > Date.now()) {
+    return cached.result
+  }
+
+  const res = await fetch(BROWSE_URL, {
+    method: 'POST',
+    headers: CLIENT_HEADERS,
+    body: JSON.stringify({
+      context: { client: CLIENT },
+      browseId: channelId,
+      params: CHANNEL_VIDEOS_PARAMS,
+    }),
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    throw new Error(`InnerTube browse request failed (${res.status})`)
+  }
+
+  const json = await res.json()
+
+  const channelTitle =
+    json?.header?.c4TabbedHeaderRenderer?.title ||
+    json?.header?.pageHeaderRenderer?.pageTitle ||
+    json?.metadata?.channelMetadataRenderer?.title ||
+    ''
+
+  const renderers = collectRenderers(json, VIDEO_RENDERERS)
+  const seen = new Set<string>()
+  const videos: ChannelVideo[] = []
+
+  for (const renderer of renderers) {
+    const videoId =
+      renderer.videoId ||
+      renderer.navigationEndpoint?.watchEndpoint?.videoId ||
+      renderer.navigationEndpoint?.reelWatchEndpoint?.videoId
+    if (!videoId || seen.has(videoId)) continue
+    seen.add(videoId)
+
+    const thumbnails = renderer.thumbnail?.thumbnails || []
+    const thumbnail =
+      thumbnails[thumbnails.length - 1]?.url ||
+      `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+
+    videos.push({
+      videoId,
+      title: runsText(renderer.title) || runsText(renderer.headline) || 'Untitled',
+      description: runsText(renderer.descriptionSnippet),
+      thumbnail,
+      channelTitle,
+      publishedAt: '',
+      publishedText: runsText(renderer.publishedTimeText),
+      viewCountText:
+        runsText(renderer.viewCountText) ||
+        runsText(renderer.shortViewCountText),
+      channelId,
+      watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    })
+
+    if (videos.length >= limit) break
+  }
+
+  const result: ChannelVideosResult = { videos, channelTitle }
+  channelVideoCache.set(channelId, {
+    result,
+    expires: Date.now() + CHANNEL_CACHE_TTL_MS,
+  })
+  return result
+}
+

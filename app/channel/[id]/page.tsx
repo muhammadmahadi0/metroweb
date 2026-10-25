@@ -16,6 +16,8 @@ interface Video {
   thumbnail: string
   channelTitle: string
   publishedAt: string
+  publishedText?: string
+  viewCountText?: string
   channelId: string
   watchUrl: string
 }

@@ -8,14 +8,15 @@ The original MetroList is a YouTube Music client for Android. This clone is a **
 
 - No pre-loaded channels — your list starts empty.
 - An **Add** button lets you paste any YouTube channel link (handle, `/channel/`, `/c/`, `/user/`) to add a new channel.
-- Each channel shows its latest videos, which open on YouTube.
+- Each channel shows its latest videos, which play inside the app.
 - Channels are saved in `localStorage` (no backend/database required).
+- **No YouTube API key required** — channel lookup, channel videos, and playback all use YouTube's public pages and InnerTube API.
 
 ## Features
 
 - ✅ Add channels by pasting a YouTube channel link
 - ✅ Channel metadata resolved server-side (title, description, thumbnail, channel ID)
-- ✅ Latest videos per channel (requires YouTube Data API v3 key)
+- ✅ Latest videos per channel, fetched via InnerTube (no API key)
 - ✅ Remove channels
 - ✅ **In-app playback via YouTube InnerTube** — videos play inside the app instead of opening YouTube
 - ✅ **Material 3 (Material You) design system** — tonal color tokens, elevation, extended FAB, rounded cards, dialog, light/dark themes
@@ -37,24 +38,21 @@ The UI implements a Material 3 design system from scratch:
 # Install dependencies
 npm install
 
-# Copy the env example and add your YouTube Data API key
-cp .env.example .env.local
-
 # Run the dev server
 npm run dev
 ```
 
 Open http://localhost:3000
 
-## YouTube Data API key
+## No API key required
 
-Channel video loading uses the YouTube Data API v3. Without a key, the app still works for adding/browsing channels but will show an "API key not configured" message on channel detail pages.
+Everything works out of the box:
 
-To get a key:
-1. Go to https://console.cloud.google.com/
-2. Create a project → enable **YouTube Data API v3**
-3. Create credentials → API key
-4. Paste it into `.env.local` as `YOUTUBE_DATA_API_KEY=...`
+- **Adding a channel** scrapes the public channel page for metadata.
+- **Channel videos** are fetched through the InnerTube `browse` endpoint (channel "Videos" tab).
+- **Playback** uses the InnerTube `player` endpoint.
+
+There are no environment variables to configure.
 
 ## Video playback (InnerTube)
 
@@ -77,9 +75,8 @@ Clicking a video opens `/watch/<videoId>`, which plays in-app:
 
 1. Import the repository at https://vercel.com/new
 2. Framework preset: **Next.js**
-3. Add environment variable `YOUTUBE_DATA_API_KEY` (see above)
-4. Ensure the Node.js version is **20.x or 22.x**
-5. Deploy
+3. Ensure the Node.js version is **20.x or 22.x**
+4. Deploy
 
 The build uses `next build --webpack` (see `package.json`) for maximum compatibility.
 
